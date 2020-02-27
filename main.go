@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"time"
@@ -124,6 +126,9 @@ func handle500(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+
+	var port string
+
 	rand.Seed(time.Now().UnixNano())
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", handleDefault)
@@ -132,6 +137,8 @@ func main() {
 	mux.HandleFunc("/300", handle300)
 	mux.HandleFunc("/400", handle400)
 	mux.HandleFunc("/500", handle500)
+	flag.StringVar(&port, "port", "1337", "set port")
+	flag.Parse()
 
-	http.ListenAndServe(":1337", mux)
+	http.ListenAndServe(fmt.Sprintf(":%s", port), mux)
 }

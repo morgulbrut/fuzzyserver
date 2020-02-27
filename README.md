@@ -2,7 +2,7 @@
 
 Dead simple webserver in go that just throw back random http status codes.
 
-Listens on port 1337.
+Listens on port 1337 as default, port can be defined using the `-port` flag.
 
 * `localhost:1337` gives back a random status code from the whole range.
 * `localhost:1337/100` gives back a random status code from the 100 range.
