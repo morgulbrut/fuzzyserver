@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/morgulbrut/color256"
 	"github.com/morgulbrut/fuzzyserver/handles"
 )
 
@@ -58,13 +59,13 @@ func handleRoot(w http.ResponseWriter, req *http.Request) {
 
 func wrapHandlerWithLogging(wrappedHandler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		log.Printf("--> %s %s %s %s", req.Method, req.URL.Path, req.RemoteAddr, req.UserAgent())
+		log.Printf(color256.HiYellow("--> %s %s %s %s", req.Method, req.URL.Path, req.RemoteAddr, req.UserAgent()))
 
 		lrw := NewLoggingResponseWriter(w)
 		wrappedHandler.ServeHTTP(lrw, req)
 
 		statusCode := lrw.statusCode
-		log.Printf("<-- %d %s", statusCode, http.StatusText(statusCode))
+		log.Printf(color256.HiCyan("<-- %d %s", statusCode, http.StatusText(statusCode)))
 	})
 }
 
