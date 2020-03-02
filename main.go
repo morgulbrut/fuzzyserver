@@ -1,144 +1,85 @@
+// Copyright © 2020 morgulbrut
+// This work is free. You can redistribute it and/or modify it under the
+// terms of the Do What The Fuck You Want To Public License, Version 2,
+// as published by Sam Hocevar. See the LICENSE file for more details.
+
+// main.go server: https://gist.github.com/Boerworz/b683e46ae0761056a636
+
 package main
 
 import (
-	"flag"
-	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"time"
+
+	"github.com/morgulbrut/fuzzyserver/handles"
 )
 
-func handleDefault(w http.ResponseWriter, r *http.Request) {
-	handle := rand.Intn(5)
-	if handle == 0 {
-		handle100(w, r)
-	}
-	if handle == 1 {
-		handle200(w, r)
-	}
-	if handle == 2 {
-		handle300(w, r)
-	}
-	if handle == 3 {
-		handle400(w, r)
-	}
-	if handle == 4 {
-		handle500(w, r)
-	}
-}
-
-func handle100(w http.ResponseWriter, r *http.Request) {
-	states := []int{
-		http.StatusContinue,
-		http.StatusSwitchingProtocols,
-		http.StatusProcessing,
-		http.StatusEarlyHints,
-	}
-	choosen := states[rand.Intn(len(states))]
-	w.WriteHeader(choosen)
-}
-
-func handle200(w http.ResponseWriter, r *http.Request) {
-	states := []int{
-		http.StatusOK,
-		http.StatusCreated,
-		http.StatusAccepted,
-		http.StatusNonAuthoritativeInfo,
-		http.StatusNoContent,
-		http.StatusResetContent,
-		http.StatusPartialContent,
-		http.StatusMultiStatus,
-		http.StatusAlreadyReported,
-		http.StatusIMUsed,
-	}
-
-	choosen := states[rand.Intn(len(states))]
-	w.WriteHeader(choosen)
-}
-
-func handle300(w http.ResponseWriter, r *http.Request) {
-	states := []int{
-		http.StatusMultipleChoices,
-		http.StatusMovedPermanently,
-		http.StatusFound,
-		http.StatusSeeOther,
-		http.StatusNotModified,
-		http.StatusUseProxy,
-		http.StatusTemporaryRedirect,
-		http.StatusPermanentRedirect,
-	}
-	choosen := states[rand.Intn(len(states))]
-	w.WriteHeader(choosen)
-}
-
-func handle400(w http.ResponseWriter, r *http.Request) {
-	states := []int{
-		http.StatusBadRequest,
-		http.StatusUnauthorized,
-		http.StatusPaymentRequired,
-		http.StatusForbidden,
-		http.StatusNotFound,
-		http.StatusMethodNotAllowed,
-		http.StatusNotAcceptable,
-		http.StatusProxyAuthRequired,
-		http.StatusRequestTimeout,
-		http.StatusConflict,
-		http.StatusGone,
-		http.StatusLengthRequired,
-		http.StatusPreconditionFailed,
-		http.StatusRequestEntityTooLarge,
-		http.StatusRequestURITooLong,
-		http.StatusUnsupportedMediaType,
-		http.StatusRequestedRangeNotSatisfiable,
-		http.StatusExpectationFailed,
-		http.StatusTeapot,
-		http.StatusMisdirectedRequest,
-		http.StatusUnprocessableEntity,
-		http.StatusLocked,
-		http.StatusFailedDependency,
-		http.StatusTooEarly,
-		http.StatusUpgradeRequired,
-		http.StatusPreconditionRequired,
-		http.StatusTooManyRequests,
-		http.StatusRequestHeaderFieldsTooLarge,
-		http.StatusUnavailableForLegalReasons,
-	}
-	choosen := states[rand.Intn(len(states))]
-	w.WriteHeader(choosen)
-}
-
-func handle500(w http.ResponseWriter, r *http.Request) {
-	states := []int{
-		http.StatusInternalServerError,
-		http.StatusNotImplemented,
-		http.StatusBadGateway,
-		http.StatusServiceUnavailable,
-		http.StatusGatewayTimeout,
-		http.StatusHTTPVersionNotSupported,
-		http.StatusVariantAlsoNegotiates,
-		http.StatusInsufficientStorage,
-		http.StatusLoopDetected,
-		http.StatusNotExtended,
-		http.StatusNetworkAuthenticationRequired,
-	}
-	choosen := states[rand.Intn(len(states))]
-	w.WriteHeader(choosen)
-}
-
 func main() {
-
-	var port string
+	// We need to cast handleRoot to a http.HandlerFunc since wrapHandlerWithLogging
+	// takes a http.Handler, not an arbitrary function.
+	handler := wrapHandlerWithLogging(http.HandlerFunc(handleRoot))
+	http.Handle("/", handler)
+	http.Handle("/r100", wrapHandlerWithLogging(http.HandlerFunc(handles.R100)))
+	http.Handle("/r200", wrapHandlerWithLogging(http.HandlerFunc(handles.R200)))
+	http.Handle("/r300", wrapHandlerWithLogging(http.HandlerFunc(handles.R300)))
+	http.Handle("/r400", wrapHandlerWithLogging(http.HandlerFunc(handles.R400)))
+	http.Handle("/r500", wrapHandlerWithLogging(http.HandlerFunc(handles.R500)))
 
 	rand.Seed(time.Now().UnixNano())
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", handleDefault)
-	mux.HandleFunc("/100", handle100)
-	mux.HandleFunc("/200", handle200)
-	mux.HandleFunc("/300", handle300)
-	mux.HandleFunc("/400", handle400)
-	mux.HandleFunc("/500", handle500)
-	flag.StringVar(&port, "port", "1337", "set port")
-	flag.Parse()
 
-	http.ListenAndServe(fmt.Sprintf(":%s", port), mux)
+	log.Fatal(http.ListenAndServe(":1337", nil))
+}
+
+// ---- Handlers
+
+func handleRoot(w http.ResponseWriter, req *http.Request) {
+	handle := rand.Intn(5)
+	if handle == 0 {
+		handles.R100(w, req)
+	}
+	if handle == 1 {
+		handles.R200(w, req)
+	}
+	if handle == 2 {
+		handles.R300(w, req)
+	}
+	if handle == 3 {
+		handles.R400(w, req)
+	}
+	if handle == 4 {
+		handles.R500(w, req)
+	}
+
+}
+
+// ---- Logging
+
+func wrapHandlerWithLogging(wrappedHandler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		log.Printf("--> %s %s %s %s", req.Method, req.URL.Path, req.RemoteAddr, req.UserAgent())
+
+		lrw := NewLoggingResponseWriter(w)
+		wrappedHandler.ServeHTTP(lrw, req)
+
+		statusCode := lrw.statusCode
+		log.Printf("<-- %d %s", statusCode, http.StatusText(statusCode))
+	})
+}
+
+type loggingResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func NewLoggingResponseWriter(w http.ResponseWriter) *loggingResponseWriter {
+	// WriteHeader(int) is not called if our response implicitly returns 200 OK, so
+	// we default to that status code.
+	return &loggingResponseWriter{w, http.StatusOK}
+}
+
+func (lrw *loggingResponseWriter) WriteHeader(code int) {
+	lrw.statusCode = code
+	lrw.ResponseWriter.WriteHeader(code)
 }
