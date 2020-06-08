@@ -30,6 +30,7 @@ func main() {
 
 	rand.Seed(time.Now().UnixNano())
 
+	log.Printf(color256.HiOrange("Server running on port 1337"))
 	log.Fatal(http.ListenAndServe(":1337", nil))
 }
 
@@ -52,7 +53,6 @@ func handleRoot(w http.ResponseWriter, req *http.Request) {
 	if handle == 4 {
 		handles.R500(w, req)
 	}
-
 }
 
 // ---- Logging
