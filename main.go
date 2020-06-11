@@ -8,6 +8,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -18,20 +20,30 @@ import (
 )
 
 func main() {
+
+	var debug bool
+	var port string
+	flag.BoolVar(&debug, "d", false, "")
+	flag.StringVar(&port, "p", "1337", "")
+	flag.Parse()
+
 	// We need to cast handleRoot to a http.HandlerFunc since wrapHandlerWithLogging
 	// takes a http.Handler, not an arbitrary function.
 	handler := wrapHandlerWithLogging(http.HandlerFunc(handleRoot))
 	http.Handle("/", handler)
-	http.Handle("/r100", wrapHandlerWithLogging(http.HandlerFunc(handles.R100)))
-	http.Handle("/r200", wrapHandlerWithLogging(http.HandlerFunc(handles.R200)))
-	http.Handle("/r300", wrapHandlerWithLogging(http.HandlerFunc(handles.R300)))
-	http.Handle("/r400", wrapHandlerWithLogging(http.HandlerFunc(handles.R400)))
-	http.Handle("/r500", wrapHandlerWithLogging(http.HandlerFunc(handles.R500)))
+
+	if debug {
+		http.Handle("/r100", wrapHandlerWithLogging(http.HandlerFunc(handles.R100)))
+		http.Handle("/r200", wrapHandlerWithLogging(http.HandlerFunc(handles.R200)))
+		http.Handle("/r300", wrapHandlerWithLogging(http.HandlerFunc(handles.R300)))
+		http.Handle("/r400", wrapHandlerWithLogging(http.HandlerFunc(handles.R400)))
+		http.Handle("/r500", wrapHandlerWithLogging(http.HandlerFunc(handles.R500)))
+	}
 
 	rand.Seed(time.Now().UnixNano())
 
-	log.Printf(color256.HiOrange("Server running on port 1337"))
-	log.Fatal(http.ListenAndServe(":1337", nil))
+	log.Printf(color256.HiOrange("Server running on port %s", port))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }
 
 // ---- Handlers
